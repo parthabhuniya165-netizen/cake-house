@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #fffbff;
+  --color-on-background: #393831;
+  --color-primary: #c70155;
+  --color-primary-container: #ff7294;
+  --color-on-primary: #ffffff;
+  --color-primary-dim: #b1004a;
+  --color-secondary: #7f5c51;
+  --color-secondary-container: #fbcdbf;
+  --color-tertiary: #b33263;
+  --color-tertiary-container: #ff8eaf;
+  --color-surface: #fffbff;
+  --color-surface-container-low: #fdf9ed;
+  --color-surface-container-high: #f2eee1;
+  --color-surface-container-highest: #ece8da;
+  --color-surface-dim: #e6e3d4;
+  --color-on-surface: #393831;
+  --color-on-surface-variant: #66645c;
+  --color-outline: #838178;
+  --color-outline-variant: #bcb9af;
+  --color-error: #c12048;
+
+  --font-headline: var(--font-newsreader);
+  --font-body: var(--font-plus-jakarta-sans);
+
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+
+  --shadow-premium: 0 10px 30px -10px rgba(199, 1, 85, 0.15);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+  --animate-slide-up: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+
+:root {
+  --background: #fffbff;
+  --foreground: #393831;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui;
+}
