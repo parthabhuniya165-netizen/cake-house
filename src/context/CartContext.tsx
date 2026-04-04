@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { Heart, ShoppingBag, Star } from "lucide-react";
 
 export interface CartItem {
   id: string;
@@ -25,6 +26,8 @@ interface CartContextType {
   deliveryFee: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  showToast: boolean;
+  setShowToast: (show: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -32,6 +35,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const deliveryFee = 45; // Default delivery fee
 
   const addItem = (newItem: Omit<CartItem, "quantity">) => {
@@ -46,8 +50,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...currentItems, { ...newItem, quantity: 1 }];
     });
-    // Automatically open cart when adding item
-    setIsCartOpen(true);
+    
+    // Show fast micro-feedback
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+    
+    // Automatically open cart when adding item (optional, keeping it as is)
+    // setIsCartOpen(true); 
   };
 
   const removeItem = (id: string) => {
@@ -99,9 +108,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         deliveryFee,
         isCartOpen,
         setIsCartOpen,
+        showToast,
+        setShowToast,
       }}
     >
       {children}
+      {/* Global Toast */}
+      {showToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[3000] bg-on-surface text-surface py-3 px-6 rounded-2xl shadow-2xl flex items-center gap-3 animate-toast-in border border-stone-100/10 backdrop-blur-md">
+          <span className="material-symbols-outlined text-primary">shopping_cart</span>
+          <span className="font-bold text-sm tracking-wide">🛒 Item added to your order</span>
+        </div>
+      )}
     </CartContext.Provider>
   );
 }

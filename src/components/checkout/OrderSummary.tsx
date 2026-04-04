@@ -19,8 +19,65 @@ interface OrderSummaryProps {
 export function OrderSummary({ formData }: OrderSummaryProps) {
   const { items, subtotal, deliveryFee, total, updateQuantity } = useCart();
 
-  const handlePlaceOrder = () => {
-    // 1. Prepare Order Message
+  const handlePlaceOrder = async () => {
+    // 1. Strict Payload Validation
+    if (!formData.fullName || !formData.phone || items.length === 0) {
+        console.warn("Validation Failed: Missing required customer information or empty cart.");
+        return;
+    }
+
+    // 2. Data Normalization (items: [{ name, qty, price }])
+    const normalizedItems = items.map(item => ({
+        name: item.title,
+        qty: item.quantity,
+        price: item.price
+    }));
+
+    const orderData = {
+      customer_name: formData.fullName,
+      phone: formData.phone,
+      address: formData.address || 'N/A',
+      delivery_time: formData.deliverySlot || 'N/A',
+      items: normalizedItems,
+      notes: formData.notes || 'No special instructions',
+      subtotal,
+      delivery_fee: deliveryFee,
+      total_amount: total,
+      order_status: 'pending',
+      payment_status: 'unpaid'
+    };
+
+    // 3. Non-blocking Background Tasks: Save to Supabase and Notify
+    (async () => {
+        try {
+            const { supabase } = await import("@/lib/supabase");
+            
+            // Insert into Supabase
+            const { data: order, error } = await supabase
+                .from('orders')
+                .insert([orderData])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // Trigger Internal Notification (Structured)
+            await fetch('/api/notify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    type: "new_order", 
+                    data: { ...orderData, id: order.id } 
+                })
+            });
+
+        } catch (err) {
+            // Requirement: Fail gracefully without breaking UI
+            console.error("Backend Sync Error (Safe Skip):", err);
+        }
+    })();
+
+    // 4. Prepare Order Message for WhatsApp (Immediate UX)
     const orderItemsString = items.map((item: CartItem) => (
       `🍰 *${item.title}*\n   Qty: ${item.quantity}\n   Size: ${item.size || 'N/A'}\n   Flavor: ${item.flavor}\n   Rate: ₹${item.price * item.quantity}`
     )).join('\n\n');
@@ -29,38 +86,31 @@ export function OrderSummary({ formData }: OrderSummaryProps) {
 🌟 *NEW ORDER FROM THE ARTISANAL PÂTISSIER* 🌟
 
 👤 *CUSTOMER DETAILS*
-Name: ${formData.fullName || 'N/A'}
-Phone: ${formData.phone || 'N/A'}
-Address: ${formData.address || 'N/A'}
-Delivery Slot: ${formData.deliverySlot || 'N/A'}
+Name: ${orderData.customer_name}
+Phone: ${orderData.phone}
+Address: ${orderData.address}
+Delivery Slot: ${orderData.delivery_time}
 
 🍮 *ORDER SUMMARY*
 ${orderItemsString}
 
 📝 *NOTES*
-${formData.notes || 'No special instructions'}
+${orderData.notes}
 
 💰 *BILLING DETAILS*
-Subtotal: ₹${subtotal}
-Delivery: ₹${deliveryFee}
-*TOTAL PAYABLE: ₹${total}*
+Subtotal: ₹${orderData.subtotal}
+Delivery: ₹${orderData.delivery_fee}
+*TOTAL PAYABLE: ₹${orderData.total_amount}*
 
 _Order placed via Website • Secure UPI on Delivery_
 `.trim();
 
-    // 2. Encode and Redirect
+    // 5. Encode and Redirect
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/918095111111?text=${encodedMessage}`; // Realistic Mysore number placeholder
+    const whatsappUrl = `https://wa.me/918095111111?text=${encodedMessage}`;
     
-    // 3. Open in new tab
+    // 6. Open in new tab
     window.open(whatsappUrl, '_blank');
-    
-    // Note: Future payment logic (Razorpay/Stripe) will go here.
-    console.log("Future Payment Integration Point", {
-        items,
-        total,
-        customer: formData
-    });
   };
 
   return (
@@ -99,33 +149,48 @@ _Order placed via Website • Secure UPI on Delivery_
 
           <div className="h-px bg-stone-100/50 my-8" />
 
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm font-bold text-on-surface-variant uppercase tracking-widest italic">
+          <div className="space-y-6">
+            <div className="flex justify-between text-sm font-bold text-on-surface-variant uppercase tracking-widest italic opacity-60">
               <span>Subtotal</span>
               <span>₹{subtotal}</span>
             </div>
             <div className="flex justify-between text-sm font-bold text-on-surface-variant uppercase tracking-widest italic">
               <span>Delivery</span>
-              <span>₹{deliveryFee}</span>
+              <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
             </div>
             <div className="h-px bg-stone-100/50 my-4" />
-            <div className="flex justify-between items-baseline">
-              <span className="font-headline text-2xl font-extrabold italic">Total</span>
-              <span className="font-headline text-4xl font-extrabold text-primary italic underline decoration-primary/10">₹{total}</span>
+            <div className="flex justify-between items-baseline pt-4 px-4 py-6 bg-primary/5 rounded-2xl border border-primary/10">
+              <span className="font-headline text-2xl font-extrabold italic">Total Payable</span>
+              <span className="font-headline text-4xl font-extrabold text-primary italic underline underline-offset-8 decoration-primary/20">₹{total}</span>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 bg-surface-container-low rounded-2xl border border-stone-100">
+              <span className="material-symbols-outlined text-secondary">schedule</span>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Estimated Delivery</span>
+                <span className="text-xs font-bold text-on-surface italic">Today, by {formData.deliverySlot === 'Morning Bliss' ? '2 PM' : '9 PM'}</span>
+              </div>
             </div>
 
             <Button 
               onClick={handlePlaceOrder}
               size="xl" 
-              className="w-full h-16 mt-6 rounded-2xl bg-gradient-to-br from-primary to-primary-dim shadow-premium hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+              className="w-full h-16 mt-6 rounded-2xl bg-gradient-to-br from-primary to-primary-dim shadow-premium hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-3 relative overflow-hidden group"
             >
+              <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
               <span className="material-symbols-outlined">chat</span>
               <span className="font-bold uppercase tracking-widest">Place Order via WhatsApp</span>
             </Button>
             
-            <p className="text-[10px] text-center text-on-surface-variant uppercase font-bold tracking-[0.2em] pt-4 opacity-60">
-              Secure Ordering • Pay via UPI on Delivery
-            </p>
+            <div className="space-y-3 pt-6">
+              <p className="text-[10px] text-center text-on-surface-variant uppercase font-black tracking-[0.2em] opacity-60 flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-sm text-green-600">verified_user</span>
+                Cash on Delivery available
+              </p>
+              <p className="text-[10px] text-center text-on-surface-variant uppercase font-bold tracking-[0.2em] opacity-40">
+                Secure Ordering • Pay via UPI on Delivery
+              </p>
+            </div>
           </div>
         </section>
 

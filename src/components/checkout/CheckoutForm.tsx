@@ -27,10 +27,13 @@ export function CheckoutForm({ formData, setFormData }: CheckoutFormProps) {
   ];
 
   return (
-    <div className="space-y-10">
-      <header>
-        <h2 className="font-headline text-4xl text-on-surface mb-2 font-bold italic">Checkout</h2>
-        <p className="text-on-surface-variant font-medium text-sm italic">Complete your order details to enjoy our handcrafted delights.</p>
+    <div className="space-y-12">
+      <header className="space-y-4">
+        <div className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
+          Almost done! 🎉
+        </div>
+        <h2 className="font-headline text-5xl text-on-surface mb-2 font-bold italic tracking-tighter">Checkout</h2>
+        <p className="text-on-surface-variant font-medium text-lg italic opacity-70 leading-relaxed">Complete your order details to enjoy Mysore's finest handcrafted delights.</p>
       </header>
 
       {/* Delivery Details */}

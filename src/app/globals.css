@@ -32,11 +32,17 @@
   --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
 
   --animate-slide-up: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-toast-in: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slide-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+
+@keyframes toast-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 
@@ -49,4 +55,28 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui;
+  background-image: radial-gradient(#c70155 0.5px, transparent 0.5px);
+  background-size: 32px 32px;
+  background-attachment: fixed;
+  background-color: var(--background);
+}
+
+/* Subtle background texture overlay for premium feel */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 251, 255, 0) 0%, #fffbff 100%);
+  opacity: 0.92;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

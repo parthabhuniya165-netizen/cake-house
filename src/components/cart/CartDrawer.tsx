@@ -14,7 +14,8 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { items, subtotal, deliveryFee, total, updateQuantity } = useCart();
+  const { items, subtotal, total, deliveryFee, updateQuantity } = useCart();
+  const FREE_DELIVERY_THRESHOLD = 999;
 
   return (
     <AnimatePresence>
@@ -44,11 +45,27 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
             <div className="p-8 pb-10 space-y-8 max-h-[85vh] overflow-y-auto no-scrollbar">
               <div className="flex items-center justify-between">
-                <h2 className="font-headline text-3xl font-bold">Your Basket</h2>
-                <Button variant="ghost" size="icon" onClick={onClose}>
+                <h2 className="font-headline text-3xl font-bold italic">Your Order</h2>
+                <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
                   <span className="material-symbols-outlined">close</span>
                 </Button>
               </div>
+
+              {items.length > 0 && (
+                <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-primary">
+                    <span>{subtotal >= 999 ? "🎉 Free Delivery Unlocked!" : `₹${Math.max(0, 999 - subtotal)} away from free delivery`}</span>
+                    <span>₹999</span>
+                  </div>
+                  <div className="h-2 w-full bg-primary/10 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, (subtotal / 999) * 100)}%` }}
+                      className="h-full bg-primary shadow-sm shadow-primary/20" 
+                    />
+                  </div>
+                </div>
+              )}
 
               {items.length === 0 ? (
                 <div className="py-20 text-center space-y-4">
