@@ -36,9 +36,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-body bg-surface text-on-surface">
-        <ClientLayout>
           {children}
-        </ClientLayout>
       </body>
     </html>
   );
