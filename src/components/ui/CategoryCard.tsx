@@ -19,8 +19,12 @@ export const CategoryCard = ({
   className,
   colorClass = "bg-primary-container/20 text-primary",
 }: CategoryCardProps) => {
+  const isCustom = title.toLowerCase() === "custom";
+  const whatsappNumber = "918095111111"; // Updated with user's number from settings placeholder
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hi! I'm interested in a custom cake from The Cake House.`;
+
   return (
-    <Link href="/#menu" className="block">
+    <Link href={isCustom ? whatsappUrl : "/#menu"} target={isCustom ? "_blank" : undefined} className="block">
       <motion.div
         whileHover={{ y: -4, backgroundColor: "rgba(199, 1, 85, 0.05)" }}
         whileTap={{ scale: 0.98 }}

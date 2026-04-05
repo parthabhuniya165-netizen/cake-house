@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Star, Clock, Sprout, Receipt, ShoppingBag } from "lucide-react";
-import { products } from "@/lib/products";
-import { QuantitySelector } from "@/components/ui/QuantitySelector";
+import { supabase } from "@/lib/supabase";
 import { useCart } from "@/context/CartContext";
+import { QuantitySelector } from "@/components/ui/QuantitySelector";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -16,14 +16,56 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const { addItem, updateQuantity, items, setIsCartOpen } = useCart();
   
-  const product = useMemo(() => products.find((p) => p.id === id) || products[0], [id]);
-  const cartItem = items.find((item) => item.id === product.id);
-
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [size, setSize] = useState("0.5 kg");
-  const [flavor, setFlavor] = useState(product.flavor);
+  const [flavor, setFlavor] = useState("");
   const [message, setMessage] = useState("");
 
-  const sizes = ["0.5 kg", "1.0 kg", "2.0 kg"];
+  const cartItem = items.find((item: any) => item.id === product?.id);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
+      if (error || !data) {
+        setLoading(false);
+        return;
+      }
+      setProduct({
+        id: data.id,
+        title: data.name,
+        price: data.price,
+        image: data.image_url,
+        description: data.description,
+        flavor: data.flavor,
+        longDescription: data.long_description,
+        quantity_options: data.quantity_options || ["0.5kg", "1kg"],
+        tags: data.tags || []
+      });
+      setFlavor(data.flavor || "Chocolate");
+      setLoading(false);
+    };
+    fetchProduct();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FDF8F3]">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FDF8F3] gap-6">
+        <h2 className="font-headline text-4xl italic text-on-surface">Creation Not Found</h2>
+        <Button onClick={() => router.push('/')} variant="outline" className="rounded-full px-8">Back to Collections</Button>
+      </div>
+    );
+  }
+
+  const sizes: string[] = product.quantity_options || ["0.5kg", "1kg", "2kg"];
   const flavors = [
     { name: "Chocolate", color: "#3d1a11" },
     { name: "Vanilla", color: "#fdf5e6" },
@@ -93,7 +135,7 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-stone-400">Select Weight</label>
             <div className="flex gap-3">
-              {sizes.map(s => (
+              {sizes.map((s: string) => (
                 <button
                   key={s}
                   onClick={() => setSize(s)}

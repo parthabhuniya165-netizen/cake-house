@@ -4,13 +4,31 @@ import React from "react";
 import Image from "next/image";
 import { ArrowRight, Star, PartyPopper, Heart, Palette, Cake } from "lucide-react";
 import { motion } from "framer-motion";
-import { products } from "@/lib/products";
+import { supabase } from "@/lib/supabase";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { CategoryCard } from "@/components/ui/CategoryCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function HomePage() {
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+      if (data) setProducts(data.map(p => ({
+        id: p.id,
+        title: p.name,
+        price: p.price,
+        image: p.image_url,
+        description: p.description
+      })));
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
+
   const categories = [
     { icon: PartyPopper, title: "Birthday", color: "bg-secondary-container text-secondary" },
     { icon: Heart, title: "Wedding", color: "bg-[#fbcdbf] text-[#7f5c51]" },
